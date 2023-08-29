@@ -9,8 +9,11 @@ class DoorDetector:
     WEIGHTS_FILE_PATH = os.path.join(os.path.dirname(__file__), "yolo-door.weights")
     DOOR_CLASS = 0
 
-    def __init__(self, img: ndarray):
-        self.image = img
+    def __init__(self, vid_source=0):
+        video = cv2.VideoCapture(vid_source)
+        is_ok, frame = video.read()
+        if is_ok:
+            self.image = frame
 
     def detect_all_doors(self):
         doors = []
