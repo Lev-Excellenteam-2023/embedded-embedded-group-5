@@ -5,8 +5,8 @@ from numpy import ndarray
 
 
 class DoorDetector:
-    CONFIG_FILE_PATH = "yolo-door.cfg"
-    WEIGHTS_FILE_PATH = "yolo-door.weights"
+    CONFIG_FILE_PATH = os.path.join(os.path.dirname(__file__), "yolo-door.cfg")
+    WEIGHTS_FILE_PATH = os.path.join(os.path.dirname(__file__), "yolo-door.weights")
     DOOR_CLASS = 0
 
     def __init__(self, img: ndarray):
