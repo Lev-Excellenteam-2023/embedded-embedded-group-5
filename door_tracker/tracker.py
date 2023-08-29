@@ -7,17 +7,7 @@ PATH = r'..\closed_open_vid.mp4'
 if __name__ == '__main__':
 
     tracker_type = 'KCF'
-
-    match tracker_type:
-        case 'BOOSTING': tracker = cv2.TrackerBoosting_create()
-        case 'MIL': tracker = cv2.TrackerMIL_create()
-        case 'KCF': tracker = cv2.TrackerKCF_create()
-        case 'TLD': tracker = cv2.TrackerTLD_create()
-        case 'MEDIANFLOW': tracker = cv2.TrackerMedianFlow_create()
-        case 'GOTURN': tracker = cv2.TrackerGOTURN_create()
-        case 'MOSSE': tracker = cv2.TrackerMOSSE_create()
-        case 'CSRT': tracker = cv2.TrackerCSRT_create()
-        case _: sys.exit()
+    tracker1, tracker2 = (cv2.TrackerKCF_create(), cv2.TrackerKCF_create())
 
     video = cv2.VideoCapture(PATH)  # 0 instead of PATH for CAM
 
@@ -25,8 +15,8 @@ if __name__ == '__main__':
         print("Could not open video")
         sys.exit()
 
-    ok, frame = video.read()
-    if not ok:
+    ok_frame, frame = video.read()
+    if not ok_frame:
         print('Cannot read video file')
         sys.exit()
 
@@ -34,36 +24,44 @@ if __name__ == '__main__':
     length = 90
     x = 619
     y = 236
-    initial_bbox = (x + 430 - length, y - length//2, length, length)
+    initial_bbox1 = (x + 430 - length, y - length//2, length, length)
     initial_bbox2 = (x - length//2, y - length//2, length, length)
 
     # Initialize tracker with first frame and bounding box
-    ok = tracker.init(frame, initial_bbox)
+    tracker1.init(frame, initial_bbox1)
+    tracker2.init(frame, initial_bbox2)
 
     while True:
         # Read a new frame
-        ok, frame = video.read()
+        ok_frame, frame = video.read()
 
-        if not ok:
+        if not ok_frame:
             break
 
         # Start timer
         timer = cv2.getTickCount()
 
         # Update tracker
-        ok, bbox = tracker.update(frame)
+        ok_tracker1, bbox1 = tracker1.update(frame)
+        ok_tracker2, bbox2 = tracker2.update(frame)
 
         # Calculate Frames per second (FPS)
         fps = cv2.getTickFrequency() / (cv2.getTickCount() - timer)
 
         # Draw bounding box
-        if ok:
+        if ok_tracker1 or ok_tracker2:
             # Tracking success
-            p1 = (int(bbox[0]), int(bbox[1]))
-            p2 = (int(bbox[0] + bbox[2]), int(bbox[1] + bbox[3]))
-            print((int(bbox[0]), int(bbox[1])), (int(bbox[2]), int(bbox[3])))
+            p1 = (int(bbox1[0]), int(bbox1[1]))
+            p2 = (int(bbox1[0] + bbox1[2]), int(bbox1[1] + bbox1[3]))
             cv2.rectangle(frame, p1, p2, (255, 0, 0), 2, 1)
-            if abs(initial_bbox[0] - bbox[0]) > 2 or abs(initial_bbox[1] - bbox[1]) > 2:
+            # print((int(bbox1[0]), int(bbox1[1])), (int(bbox1[2]), int(bbox1[3])))
+            p3 = (int(bbox2[0]), int(bbox2[1]))
+            p4 = (int(bbox2[0] + bbox2[2]), int(bbox2[1] + bbox2[3]))
+            cv2.rectangle(frame, p3, p4, (255, 0, 0), 2, 1)
+            # print((int(bbox2[0]), int(bbox2[1])), (int(bbox2[2]), int(bbox2[3])))
+
+            if abs(initial_bbox1[0] - bbox1[0]) > 2 or abs(initial_bbox1[1] - bbox1[1]) > 2 \
+                    or abs(initial_bbox2[0] - bbox2[0]) > 2 or abs(initial_bbox2[1] - bbox2[1]) > 2:
                 cv2.putText(frame, "Door is open", (100, 80), cv2.FONT_HERSHEY_SIMPLEX,
                             0.75, (0, 0, 255), 2)
                 print("changed")
@@ -86,8 +84,8 @@ if __name__ == '__main__':
         # Display result
         cv2.imshow("Tracking", frame)
 
-        # Exit if ESC pressed
-        if cv2.waitKey(1) & 0xFF == ord('q'):  # if press SPACE bar
+        # if press SPACE bar
+        if cv2.waitKey(1) & 0xFF == ord('q'):
             break
 
         # time.sleep(0.1)
