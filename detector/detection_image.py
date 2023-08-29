@@ -1,3 +1,4 @@
+import os
 from math import ceil
 import cv2
 import numpy as np
@@ -76,7 +77,8 @@ class DoorDetector:
                 y = box[1]
                 w = box[2]
                 h = box[3]
-                doors.append((round(x + w / 10), round(y + h / 10)))
+                doors.append((round(x + w / 10), round(y + h / 10), round(w - w / 20)))
+                # add_red_point(self.image, (round(x + w / 10), round(y + h / 10)))
         return doors
 
     @staticmethod
