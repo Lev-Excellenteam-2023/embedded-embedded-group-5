@@ -11,74 +11,82 @@ class DoorDetector:
     HANDLE_CLASS = 1
 
     def __init__(self, vid_source=0):
-        video = cv2.VideoCapture(vid_source)
-        is_ok, frame = video.read()
+        self.video = cv2.VideoCapture(vid_source)
+        self.read_frame()
+
+    def read_frame(self):
+        is_ok, frame = self.video.read()
         if is_ok:
             self.image = frame
 
     def detect_all_doors(self):
         doors = []
-        width = self.image.shape[1]
-        height = self.image.shape[0]
-        scale = 0.00392  # this is 1/255
-        net = cv2.dnn.readNet(self.WEIGHTS_FILE_PATH, self.CONFIG_FILE_PATH)
-        blob = cv2.dnn.blobFromImage(self.image, scale, (416, 416), (0, 0, 0), True, crop=False)
-        net.setInput(blob)
-        outs = net.forward(self._get_output_layers(net))
-        class_ids = []
-        confidences = []
-        boxes = []
-        conf_threshold = 0.5
-        nms_threshold = 0.4
-        for out in outs:
-            for detection in out:
-                scores = detection[5:]
-                class_id = np.argmax(scores)
-                confidence = scores[class_id]
-                if confidence > 0.5:
-                    center_x = int(detection[0] * width)
-                    center_y = int(detection[1] * height)
-                    w = int(detection[2] * width)
-                    h = int(detection[3] * height)
-                    x = center_x - w / 2
-                    y = center_y - h / 2
-                    class_ids.append(class_id)
-                    confidences.append(float(confidence))
-                    boxes.append([x, y, w, h])
+        while not doors:
 
-        # After detecting the whole image, try to crop square subimage and do further detection
-        sub_image_list = self._split_image()
-        for s in sub_image_list:
-            sub_image = self.image[s[1]:s[1] + s[3], s[0]:s[0] + s[2]]
-            blob = cv2.dnn.blobFromImage(sub_image, scale, (416, 416), (0, 0, 0), True, crop=False)
+            width = self.image.shape[1]
+            height = self.image.shape[0]
+            scale = 0.00392  # this is 1/255
+            net = cv2.dnn.readNet(self.WEIGHTS_FILE_PATH, self.CONFIG_FILE_PATH)
+            blob = cv2.dnn.blobFromImage(self.image, scale, (416, 416), (0, 0, 0), True, crop=False)
             net.setInput(blob)
             outs = net.forward(self._get_output_layers(net))
-
+            class_ids = []
+            confidences = []
+            boxes = []
+            conf_threshold = 0.5
+            nms_threshold = 0.4
             for out in outs:
                 for detection in out:
                     scores = detection[5:]
                     class_id = np.argmax(scores)
                     confidence = scores[class_id]
                     if confidence > 0.5:
-                        center_x = int(detection[0] * s[2]) + s[0]
-                        center_y = int(detection[1] * s[3]) + s[1]
-                        w = int(detection[2] * s[2])
-                        h = int(detection[3] * s[3])
+                        center_x = int(detection[0] * width)
+                        center_y = int(detection[1] * height)
+                        w = int(detection[2] * width)
+                        h = int(detection[3] * height)
                         x = center_x - w / 2
                         y = center_y - h / 2
                         class_ids.append(class_id)
                         confidences.append(float(confidence))
                         boxes.append([x, y, w, h])
-        indices = cv2.dnn.NMSBoxes(boxes, confidences, conf_threshold, nms_threshold)
-        for i in indices:
-            box = boxes[i]
-            if class_ids[i] == self.HANDLE_CLASS:
-                x = box[0]
-                y = box[1]
-                w = box[2]
-                h = box[3]
-                doors.append((round(x + w/2), round(y + h/2), round(w)))
-                #add_red_point(self.image, (round(x), round(y)))
+
+            # After detecting the whole image, try to crop square subimage and do further detection
+            sub_image_list = self._split_image()
+            for s in sub_image_list:
+                sub_image = self.image[s[1]:s[1] + s[3], s[0]:s[0] + s[2]]
+                blob = cv2.dnn.blobFromImage(sub_image, scale, (416, 416), (0, 0, 0), True, crop=False)
+                net.setInput(blob)
+                outs = net.forward(self._get_output_layers(net))
+
+                for out in outs:
+                    for detection in out:
+                        scores = detection[5:]
+                        class_id = np.argmax(scores)
+                        confidence = scores[class_id]
+                        if confidence > 0.5:
+                            center_x = int(detection[0] * s[2]) + s[0]
+                            center_y = int(detection[1] * s[3]) + s[1]
+                            w = int(detection[2] * s[2])
+                            h = int(detection[3] * s[3])
+                            x = center_x - w / 2
+                            y = center_y - h / 2
+                            class_ids.append(class_id)
+                            confidences.append(float(confidence))
+                            boxes.append([x, y, w, h])
+            indices = cv2.dnn.NMSBoxes(boxes, confidences, conf_threshold, nms_threshold)
+            for i in indices:
+                box = boxes[i]
+                if class_ids[i] == self.HANDLE_CLASS:
+                    x = box[0]
+                    y = box[1]
+                    w = box[2]
+                    h = box[3]
+                    doors.append((round(x + w/2), round(y + h/2), round(w)))
+                    #add_red_point(self.image, (round(x), round(y)))
+            if not doors:
+                self.read_frame()
+
         return doors
 
     @staticmethod
