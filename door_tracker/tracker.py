@@ -1,3 +1,4 @@
+import time
 from typing import List, Final
 import cv2
 import sys
@@ -8,12 +9,11 @@ SQUARE_LENGTH: Final[int] = 90
 
 class Tracker:
     tracker_type: str
-    tracker1: cv2.TrackerKCF
-    tracker2: cv2.TrackerKCF
+    tracker1: cv2.TrackerMIL
 
     def track_doors(self, doors: List[int], vid_source=0) -> None:
-        self.tracker_type = 'KCF'
-        self.tracker1, self.tracker2 = cv2.TrackerKCF_create(), cv2.TrackerKCF_create()
+        self.tracker_type = 'MIL'
+        self.tracker1 = cv2.TrackerMIL_create()
 
         video = cv2.VideoCapture(vid_source)  # 0 instead of PATH for CAM
 
@@ -32,12 +32,11 @@ class Tracker:
 
         # Initialize tracker with first frame and bounding box
         self.tracker1.init(frame, initial_bbox1)
-        self.tracker2.init(frame, initial_bbox2)
 
         while True:
             # Read a new frame
             ok_frame, frame = video.read()
-
+            time.sleep(0.02)
             if not ok_frame:
                 break
 
@@ -46,15 +45,14 @@ class Tracker:
 
             # Update tracker
             ok_tracker1, bbox1 = self.tracker1.update(frame)
-            ok_tracker2, bbox2 = self.tracker2.update(frame)
 
-            bboxes = [bbox1, bbox2]
+            bboxes = [bbox1]
 
             # Calculate Frames per second (FPS)
             fps = cv2.getTickFrequency() / (cv2.getTickCount() - timer)
 
             # Draw bounding box
-            if ok_tracker1 or ok_tracker2:
+            if ok_tracker1:
                 # Tracking success
                 for bbox in bboxes:
                     p1 = (int(bbox[0]), int(bbox[1]))
@@ -62,8 +60,7 @@ class Tracker:
                     cv2.rectangle(frame, p1, p2, (255, 0, 0), 2, 1)
                     # print((int(bbox1[0]), int(bbox1[1])), (int(bbox1[2]), int(bbox1[3])))
 
-                if abs(initial_bbox1[0] - bbox1[0]) > 2 or abs(initial_bbox1[1] - bbox1[1]) > 2 \
-                        or abs(initial_bbox2[0] - bbox2[0]) > 2 or abs(initial_bbox2[1] - bbox2[1]) > 2:
+                if abs(initial_bbox1[0] - bbox1[0]) > 10 or abs(initial_bbox1[1] - bbox1[1]) > 10:
                     cv2.putText(frame, "Door is open", (100, 80), cv2.FONT_HERSHEY_SIMPLEX,
                                 0.75, (0, 0, 255), 2)
                     print("changed")
