@@ -1,2 +1,6 @@
 .idea/
 .env
+*.mp4
+*.weights
+*.jpg
+*.pyc

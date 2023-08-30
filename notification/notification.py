@@ -15,14 +15,15 @@ class NotificationManager:
     """
 
     client: Client
+    to_number: str
 
-    def __int__(self):
+    def __init__(self, number: str):
         self.client = Client(TWILIO_ACCOUNT_SID, TWILIO_AUTH_TOKEN)
+        self.to_number = number
 
-    def notify_user(self, to_number: str, message_to_send: str) -> None:
+    def notify_user(self, message_to_send: str) -> None:
         """
         Sends a message to the user
-        :param to_number: number to send
         :param message_to_send: message to send
         :return: None
         """
@@ -31,7 +32,7 @@ class NotificationManager:
             .create(
                  body=message_to_send,
                  from_=FROM_NUMBER,
-                 to=to_number
+                 to=self.to_number
              )
 
         print(message.sid)
