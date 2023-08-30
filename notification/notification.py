@@ -39,4 +39,3 @@ class NotificationManager:
     def ask_doors(self, doors) -> None:
         # TODO
         pass
-
