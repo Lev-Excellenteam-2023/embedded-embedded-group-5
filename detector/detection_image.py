@@ -8,7 +8,7 @@ from numpy import ndarray
 class DoorDetector:
     CONFIG_FILE_PATH = os.path.join(os.path.dirname(__file__), "yolo-door.cfg")
     WEIGHTS_FILE_PATH = os.path.join(os.path.dirname(__file__), "yolo-door.weights")
-    DOOR_CLASS = 0
+    HANDLE_CLASS = 1
 
     def __init__(self, vid_source=0):
         video = cv2.VideoCapture(vid_source)
@@ -72,13 +72,13 @@ class DoorDetector:
         indices = cv2.dnn.NMSBoxes(boxes, confidences, conf_threshold, nms_threshold)
         for i in indices:
             box = boxes[i]
-            if not class_ids[i]:
+            if class_ids[i] == self.HANDLE_CLASS:
                 x = box[0]
                 y = box[1]
                 w = box[2]
                 h = box[3]
-                doors.append((round(x + w / 10), round(y + h / 10), round(w - w / 20)))
-                # add_red_point(self.image, (round(x + w / 10), round(y + h / 10)))
+                doors.append((round(x + w/2), round(y + h/2), round(w)))
+                #add_red_point(self.image, (round(x), round(y)))
         return doors
 
     @staticmethod
@@ -136,5 +136,6 @@ def add_red_point(img, *coordinates):
     cv2.waitKey(0)
     cv2.destroyAllWindows()
 
-
-
+# vid = cv2.VideoCapture("../new_vid.mp4")
+# ok, bb = vid.read()
+# DoorDetector(bb).detect_all_doors()
