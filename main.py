@@ -4,8 +4,12 @@ from notification.notification import NotificationManager
 
 
 def main():
-    vid_path: str = input("Enter the video path")
-    tel_num: str = input("Enter your phone number")
+    vid_path = input("Enter '0' to use the camera, or enter the video path otherwise: ")
+
+    if vid_path == '0':
+        vid_path = int(vid_path)
+
+    tel_num: str = input("Enter your phone number: ")
 
     detector = DoorDetector(vid_path)
     tracker = Tracker()
