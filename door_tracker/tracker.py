@@ -2,6 +2,7 @@ import time
 from typing import List, Final
 import cv2
 import sys
+from notification.notification import NotificationManager
 
 PATH: Final[str] = r'..\closed_open_vid.mp4'
 SQUARE_LENGTH: Final[int] = 90
@@ -9,11 +10,13 @@ SQUARE_LENGTH: Final[int] = 90
 
 class Tracker:
     tracker_type: str
-    tracker1: cv2.TrackerMIL
+    tracker: cv2.TrackerMIL
+    status: str
 
-    def track_doors(self, doors: List[int], vid_source=0) -> None:
+    def track_doors(self, doors: List[int], notify: NotificationManager, vid_source=0) -> None:
         self.tracker_type = 'MIL'
-        self.tracker1 = cv2.TrackerMIL_create()
+        self.tracker = cv2.TrackerMIL_create()
+        self.status = 'closed'
 
         video = cv2.VideoCapture(vid_source)  # 0 instead of PATH for CAM
 
@@ -26,12 +29,10 @@ class Tracker:
             print('Cannot read video file')
             sys.exit()
 
-        initial_bbox1 = (doors[0] - SQUARE_LENGTH//2, doors[1] - SQUARE_LENGTH//2, SQUARE_LENGTH, SQUARE_LENGTH)
-        initial_bbox2 = (doors[0] - SQUARE_LENGTH//2 + doors[2], doors[1] - SQUARE_LENGTH//2,
-                         SQUARE_LENGTH, SQUARE_LENGTH)
+        initial_bbox = (doors[0] - SQUARE_LENGTH//2, doors[1] - SQUARE_LENGTH//2, SQUARE_LENGTH, SQUARE_LENGTH)
 
         # Initialize tracker with first frame and bounding box
-        self.tracker1.init(frame, initial_bbox1)
+        self.tracker.init(frame, initial_bbox)
 
         while True:
             # Read a new frame
@@ -44,9 +45,7 @@ class Tracker:
             timer = cv2.getTickCount()
 
             # Update tracker
-            ok_tracker1, bbox1 = self.tracker1.update(frame)
-
-            bboxes = [bbox1]
+            ok_tracker1, bbox = self.tracker.update(frame)
 
             # Calculate Frames per second (FPS)
             fps = cv2.getTickFrequency() / (cv2.getTickCount() - timer)
@@ -54,19 +53,24 @@ class Tracker:
             # Draw bounding box
             if ok_tracker1:
                 # Tracking success
-                for bbox in bboxes:
-                    p1 = (int(bbox[0]), int(bbox[1]))
-                    p2 = (int(bbox[0] + bbox[2]), int(bbox[1] + bbox[3]))
-                    cv2.rectangle(frame, p1, p2, (255, 0, 0), 2, 1)
-                    # print((int(bbox1[0]), int(bbox1[1])), (int(bbox1[2]), int(bbox1[3])))
+                p1 = (int(bbox[0]), int(bbox[1]))
+                p2 = (int(bbox[0] + bbox[2]), int(bbox[1] + bbox[3]))
+                cv2.rectangle(frame, p1, p2, (255, 0, 0), 2, 1)
 
-                if abs(initial_bbox1[0] - bbox1[0]) > 10 or abs(initial_bbox1[1] - bbox1[1]) > 10:
+                if abs(initial_bbox[0] - bbox[0]) > 10 or abs(initial_bbox[1] - bbox[1]) > 10:
                     cv2.putText(frame, "Door is open", (100, 80), cv2.FONT_HERSHEY_SIMPLEX,
                                 0.75, (0, 0, 255), 2)
-                    print("changed")
+
+                    if self.status == 'closed':
+                        notify.notify_user("Door is open")
+                        self.status = 'open'
                 else:
                     cv2.putText(frame, "Door is closed", (100, 80), cv2.FONT_HERSHEY_SIMPLEX,
                                 0.75, (0, 0, 255), 2)
+
+                    if self.status == 'open':
+                        notify.notify_user("Door is closed")
+                        self.status = 'closed'
             else:
                 # Tracking failure
                 cv2.putText(frame, "Tracking failure detected", (100, 80), cv2.FONT_HERSHEY_SIMPLEX,
@@ -90,11 +94,3 @@ class Tracker:
         video.release()
         cv2.destroyAllWindows()
 
-
-def main():
-    my_tracker = Tracker()
-    my_tracker.track_doors([619, 236, 391])
-
-
-if __name__ == '__main__':
-    main()
