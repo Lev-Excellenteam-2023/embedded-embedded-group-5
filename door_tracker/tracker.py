@@ -1,3 +1,4 @@
+import time
 from typing import List, Final
 import cv2
 import sys
@@ -35,7 +36,7 @@ class Tracker:
         while True:
             # Read a new frame
             ok_frame, frame = video.read()
-
+            time.sleep(0.02)
             if not ok_frame:
                 break
 
@@ -59,8 +60,7 @@ class Tracker:
                     cv2.rectangle(frame, p1, p2, (255, 0, 0), 2, 1)
                     # print((int(bbox1[0]), int(bbox1[1])), (int(bbox1[2]), int(bbox1[3])))
 
-                if abs(initial_bbox1[0] - bbox1[0]) > 2 or abs(initial_bbox1[1] - bbox1[1]) > 2 \
-                        or abs(initial_bbox2[0] - bbox2[0]) > 2 or abs(initial_bbox2[1] - bbox2[1]) > 2:
+                if abs(initial_bbox1[0] - bbox1[0]) > 10 or abs(initial_bbox1[1] - bbox1[1]) > 10:
                     cv2.putText(frame, "Door is open", (100, 80), cv2.FONT_HERSHEY_SIMPLEX,
                                 0.75, (0, 0, 255), 2)
                     print("changed")
