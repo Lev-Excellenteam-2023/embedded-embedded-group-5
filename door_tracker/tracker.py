@@ -8,12 +8,11 @@ SQUARE_LENGTH: Final[int] = 90
 
 class Tracker:
     tracker_type: str
-    tracker1: cv2.TrackerKCF
-    tracker2: cv2.TrackerKCF
+    tracker1: cv2.TrackerMIL
 
     def track_doors(self, doors: List[int], vid_source=0) -> None:
-        self.tracker_type = 'KCF'
-        self.tracker1, self.tracker2 = cv2.TrackerKCF_create(), cv2.TrackerKCF_create()
+        self.tracker_type = 'MIL'
+        self.tracker1 = cv2.TrackerMIL_create()
 
         video = cv2.VideoCapture(vid_source)  # 0 instead of PATH for CAM
 
@@ -32,7 +31,6 @@ class Tracker:
 
         # Initialize tracker with first frame and bounding box
         self.tracker1.init(frame, initial_bbox1)
-        self.tracker2.init(frame, initial_bbox2)
 
         while True:
             # Read a new frame
@@ -46,15 +44,14 @@ class Tracker:
 
             # Update tracker
             ok_tracker1, bbox1 = self.tracker1.update(frame)
-            ok_tracker2, bbox2 = self.tracker2.update(frame)
 
-            bboxes = [bbox1, bbox2]
+            bboxes = [bbox1]
 
             # Calculate Frames per second (FPS)
             fps = cv2.getTickFrequency() / (cv2.getTickCount() - timer)
 
             # Draw bounding box
-            if ok_tracker1 or ok_tracker2:
+            if ok_tracker1:
                 # Tracking success
                 for bbox in bboxes:
                     p1 = (int(bbox[0]), int(bbox[1]))
