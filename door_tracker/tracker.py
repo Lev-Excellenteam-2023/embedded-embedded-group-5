@@ -4,7 +4,6 @@ import cv2
 import sys
 from notification.notification import NotificationManager
 
-PATH: Final[str] = r'..\closed_open_vid.mp4'
 SQUARE_LENGTH: Final[int] = 90
 
 
