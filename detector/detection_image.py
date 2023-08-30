@@ -1,3 +1,4 @@
+import os
 from math import ceil
 import cv2
 import numpy as np
@@ -5,12 +6,15 @@ from numpy import ndarray
 
 
 class DoorDetector:
-    CONFIG_FILE_PATH = "yolo-door.cfg"
-    WEIGHTS_FILE_PATH = "yolo-door.weights"
+    CONFIG_FILE_PATH = os.path.join(os.path.dirname(__file__), "yolo-door.cfg")
+    WEIGHTS_FILE_PATH = os.path.join(os.path.dirname(__file__), "yolo-door.weights")
     DOOR_CLASS = 0
 
-    def __init__(self, img: ndarray):
-        self.image = img
+    def __init__(self, vid_source=0):
+        video = cv2.VideoCapture(vid_source)
+        is_ok, frame = video.read()
+        if is_ok:
+            self.image = frame
 
     def detect_all_doors(self):
         doors = []
@@ -73,7 +77,8 @@ class DoorDetector:
                 y = box[1]
                 w = box[2]
                 h = box[3]
-                doors.append((round(x + w / 10), round(y + h / 10)))
+                doors.append((round(x + w / 10), round(y + h / 10), round(w - w / 20)))
+                # add_red_point(self.image, (round(x + w / 10), round(y + h / 10)))
         return doors
 
     @staticmethod

@@ -11,11 +11,11 @@ class Tracker:
     tracker1: cv2.TrackerKCF
     tracker2: cv2.TrackerKCF
 
-    def track_doors(self, doors: List[int]) -> None:
+    def track_doors(self, doors: List[int], vid_source=0) -> None:
         self.tracker_type = 'KCF'
         self.tracker1, self.tracker2 = cv2.TrackerKCF_create(), cv2.TrackerKCF_create()
 
-        video = cv2.VideoCapture(PATH)  # 0 instead of PATH for CAM
+        video = cv2.VideoCapture(vid_source)  # 0 instead of PATH for CAM
 
         if not video.isOpened():
             print("Could not open video")
