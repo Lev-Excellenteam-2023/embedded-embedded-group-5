@@ -62,14 +62,14 @@ class Tracker:
                                 0.75, (0, 0, 255), 2)
 
                     if self.status == 'closed':
-                        notify.notify_user("Door is open")
+                        notify.notify_user("Door is open", frame)
                         self.status = 'open'
                 else:
                     cv2.putText(frame, "Door is closed", (100, 80), cv2.FONT_HERSHEY_SIMPLEX,
                                 0.75, (0, 0, 255), 2)
 
                     if self.status == 'open':
-                        notify.notify_user("Door is closed")
+                        notify.notify_user("Door is closed", frame)
                         self.status = 'closed'
             else:
                 # Tracking failure
