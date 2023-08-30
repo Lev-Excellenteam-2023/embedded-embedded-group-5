@@ -1,8 +1,10 @@
 from typing import Final
 from dotenv import load_dotenv
 from twilio.rest import Client
+import numpy as np
 import os
-import imghdr
+from io import BytesIO
+from PIL import Image
 import smtplib
 from email.message import EmailMessage
 
@@ -54,19 +56,20 @@ class NotificationManager:
 
         print(message.sid)
 
-    def send_email(self, message_to_send: str, frame):
-
+    def send_email(self, message_to_send: str, image_array: np.ndarray):
         message = EmailMessage()
         message['Subject'] = 'DOOR STATUS UPDATE'
         message['From'] = EMAIL_ADDRESS
         message['To'] = self.to_email
         message.set_content(message_to_send)
 
-        image_data = frame.read()
-        image_type = imghdr.what(frame.name)
-        image_name = frame.name
+        image_pil = Image.fromarray(image_array)
+        with BytesIO() as image_buffer:
+            image_pil.save(image_buffer, format='JPEG')
+            image_data = image_buffer.getvalue()
 
-        message.add_attachment(image_data, maintype='image', subtype=image_type, filename=image_name)
+        image_name = "door_status.jpg"
+        message.add_attachment(image_data, maintype='image', subtype='jpeg', filename=image_name)
 
         server = smtplib.SMTP('smtp.gmail.com', 587)
         server.ehlo()
