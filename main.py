@@ -4,12 +4,14 @@ from notification.notification import NotificationManager
 
 
 def main():
-    vid_path: str = input("Enter the video path")
-    tel_num: str = input("Enter your phone number")
+    vid_path: str = input("Enter the video path: ")
+    tel_num: str = input("Enter your phone number: ")
+    mail_address: str = input("Enter your email address: ")
+    service: str = input("[sms] or [email] or [all]: ")
 
     detector = DoorDetector(vid_path)
     tracker = Tracker()
-    notify = NotificationManager(tel_num)
+    notify = NotificationManager(tel_num, mail_address)
 
     doors = detector.detect_all_doors()
     tracker.track_doors(doors[0], notify, vid_path)
