@@ -11,7 +11,7 @@ def main():
 
     detector = DoorDetector(vid_path)
     tracker = Tracker()
-    notify = NotificationManager(tel_num, mail_address)
+    notify = NotificationManager(tel_num, mail_address, service)
 
     doors = detector.detect_all_doors()
     tracker.track_doors(doors[0], notify, vid_path)
