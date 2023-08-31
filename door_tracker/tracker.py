@@ -62,7 +62,6 @@ class Tracker:
                                 0.75, (0, 0, 255), 2)
 
                     if self.status == 'closed':
-                        # Notify user asynchronously
                         notify_thread = threading.Thread(target=notify.notify_user,
                                                          args=("Door is open", frame.copy()))
                         notify_thread.start()
@@ -73,7 +72,6 @@ class Tracker:
                                 0.75, (0, 0, 255), 2)
 
                     if self.status == 'open':
-                        # Notify user asynchronously
                         notify_thread = threading.Thread(target=notify.notify_user,
                                                          args=("Door is closed", frame.copy()))
                         notify_thread.start()
