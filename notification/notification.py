@@ -54,8 +54,6 @@ class NotificationManager:
             to=self.to_number
         )
 
-        print(message.sid)
-
     def send_email(self, message_to_send: str, image_array: np.ndarray):
         message = EmailMessage()
         message['Subject'] = 'DOOR STATUS UPDATE'
