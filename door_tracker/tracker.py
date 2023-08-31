@@ -3,6 +3,7 @@ from typing import List, Final
 import cv2
 import sys
 from notification.notification import NotificationManager
+import threading
 
 SQUARE_LENGTH: Final[int] = 90
 
@@ -61,14 +62,20 @@ class Tracker:
                                 0.75, (0, 0, 255), 2)
 
                     if self.status == 'closed':
-                        notify.notify_user("Door is open", frame)
+                        notify_thread = threading.Thread(target=notify.notify_user,
+                                                         args=("Door is open", frame.copy()))
+                        notify_thread.start()
+
                         self.status = 'open'
                 else:
                     cv2.putText(frame, "Door is closed", (100, 80), cv2.FONT_HERSHEY_SIMPLEX,
                                 0.75, (0, 0, 255), 2)
 
                     if self.status == 'open':
-                        notify.notify_user("Door is closed", frame)
+                        notify_thread = threading.Thread(target=notify.notify_user,
+                                                         args=("Door is closed", frame.copy()))
+                        notify_thread.start()
+
                         self.status = 'closed'
             else:
                 # Tracking failure
