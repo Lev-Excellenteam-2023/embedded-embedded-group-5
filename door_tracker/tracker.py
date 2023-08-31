@@ -3,6 +3,7 @@ from typing import List, Final
 import cv2
 import sys
 from notification.notification import NotificationManager
+import threading
 
 SQUARE_LENGTH: Final[int] = 90
 
@@ -11,13 +12,17 @@ class Tracker:
     tracker_type: str
     tracker: cv2.TrackerMIL
     status: str
+    fps: float
 
     def track_doors(self, doors: List[int], notify: NotificationManager, vid_source=0) -> None:
+        f_counter = 0
+        last_changed = 0
         self.tracker_type = 'MIL'
         self.tracker = cv2.TrackerMIL_create()
         self.status = 'closed'
 
         video = cv2.VideoCapture(vid_source)  # 0 instead of PATH for CAM
+        self.fps = video.get(cv2.CAP_PROP_FPS)
 
         if not video.isOpened():
             print("Could not open video")
@@ -28,12 +33,13 @@ class Tracker:
             print('Cannot read video file')
             sys.exit()
 
-        initial_bbox = (doors[0] - SQUARE_LENGTH//2, doors[1] - SQUARE_LENGTH//2, SQUARE_LENGTH, SQUARE_LENGTH)
+        initial_bbox = (doors[0] - SQUARE_LENGTH // 2, doors[1] - SQUARE_LENGTH // 2, SQUARE_LENGTH, SQUARE_LENGTH)
 
         # Initialize tracker with first frame and bounding box
         self.tracker.init(frame, initial_bbox)
 
         while True:
+
             # Read a new frame
             ok_frame, frame = video.read()
             time.sleep(0.02)
@@ -61,14 +67,20 @@ class Tracker:
                                 0.75, (0, 0, 255), 2)
 
                     if self.status == 'closed':
-                        notify.notify_user("Door is open", frame)
+                        notify_thread = threading.Thread(target=notify.notify_user,
+                                                         args=("Door is open", frame.copy()))
+                        notify_thread.start()
+
                         self.status = 'open'
                 else:
                     cv2.putText(frame, "Door is closed", (100, 80), cv2.FONT_HERSHEY_SIMPLEX,
                                 0.75, (0, 0, 255), 2)
 
                     if self.status == 'open':
-                        notify.notify_user("Door is closed", frame)
+                        notify_thread = threading.Thread(target=notify.notify_user,
+                                                         args=("Door is closed", frame.copy()))
+                        notify_thread.start()
+
                         self.status = 'closed'
             else:
                 # Tracking failure
@@ -90,6 +102,10 @@ class Tracker:
             if cv2.waitKey(1) & 0xFF == ord('q'):
                 break
 
+            f_counter += 1
+
+            if f_counter > self.fps:
+                f_counter = 0
+
         video.release()
         cv2.destroyAllWindows()
-
