@@ -1,4 +1,3 @@
-import time
 from typing import List, Final
 import cv2
 import sys
@@ -16,7 +15,6 @@ class Tracker:
 
     def track_doors(self, doors: List[int], notify: NotificationManager, vid_source=0) -> None:
         f_counter = 0
-        last_changed = 0
         self.tracker_type = 'MIL'
         self.tracker = cv2.TrackerMIL_create()
         self.status = 'closed'
@@ -42,7 +40,6 @@ class Tracker:
 
             # Read a new frame
             ok_frame, frame = video.read()
-            time.sleep(0.02)
             if not ok_frame:
                 break
 
@@ -62,11 +59,11 @@ class Tracker:
                 p2 = (int(bbox[0] + bbox[2]), int(bbox[1] + bbox[3]))
                 cv2.rectangle(frame, p1, p2, (255, 0, 0), 2, 1)
 
-                if abs(initial_bbox[0] - bbox[0]) > 10 or abs(initial_bbox[1] - bbox[1]) > 10:
+                if abs(initial_bbox[0] - bbox[0]) > 9 or abs(initial_bbox[1] - bbox[1]) > 25:
                     cv2.putText(frame, "Door is open", (100, 80), cv2.FONT_HERSHEY_SIMPLEX,
                                 0.75, (0, 0, 255), 2)
 
-                    if self.status == 'closed':
+                    if self.status == 'closed' and f_counter == self.fps:
                         notify_thread = threading.Thread(target=notify.notify_user,
                                                          args=("Door is open", frame.copy()))
                         notify_thread.start()
@@ -76,7 +73,7 @@ class Tracker:
                     cv2.putText(frame, "Door is closed", (100, 80), cv2.FONT_HERSHEY_SIMPLEX,
                                 0.75, (0, 0, 255), 2)
 
-                    if self.status == 'open':
+                    if self.status == 'open' and f_counter == self.fps:
                         notify_thread = threading.Thread(target=notify.notify_user,
                                                          args=("Door is closed", frame.copy()))
                         notify_thread.start()
